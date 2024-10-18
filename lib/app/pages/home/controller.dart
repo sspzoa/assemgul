@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import '../../core/utils/supabase.dart';
 
 class HomePageController extends GetxController {
   final smallContainers = List.generate(3, (index) => '').obs;
@@ -6,25 +7,50 @@ class HomePageController extends GetxController {
   final combinedCharacter = ''.obs;
   final matchingWords = <String>[].obs;
 
-  // 초성 리스트
-  final List<String> choseong = [
-    'ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
-  ];
+  final choseong = <String>[].obs;
+  final jungseong = <String>[].obs;
+  final jongseong = <String>[].obs;
+  final dictionary = <String>[].obs;
 
-  // 중성 리스트
-  final List<String> jungseong = [
-    'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'
-  ];
+  final isLoading = true.obs;
+  final errorMessage = ''.obs;
 
-  // 종성 리스트
-  final List<String> jongseong = [
-    '', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'
-  ];
+  @override
+  void onInit() {
+    super.onInit();
+    fetchData();
+  }
 
-  // 간단한 사전
-  final List<String> dictionary = [
-    '달', '달리기', '달콤한', '달다', '달라지다', '달라지지'
-  ];
+  Future<void> fetchData() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = '';
+
+      final koreanCharactersResponse = await SupabaseConfig.client
+          .from('korean_characters')
+          .select()
+          .single();
+
+      if (koreanCharactersResponse != null) {
+        choseong.value = List<String>.from(koreanCharactersResponse['choseong'] ?? []);
+        jungseong.value = List<String>.from(koreanCharactersResponse['jungseong'] ?? []);
+        jongseong.value = List<String>.from(koreanCharactersResponse['jongseong'] ?? []);
+      }
+
+      final dictionaryResponse = await SupabaseConfig.client
+          .from('dictionary')
+          .select('word');
+
+      if (dictionaryResponse != null) {
+        dictionary.value = List<String>.from(dictionaryResponse.map((item) => item['word'] as String));
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+      errorMessage.value = '데이터를 불러오는 데 실패했습니다. 다시 시도해 주세요.';
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   void selectCharacter(String character) {
     if (selectedContainerIndex.value != null) {

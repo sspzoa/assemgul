@@ -12,7 +12,7 @@ void main() async {
   await AppLoader().load();
   runApp(
     GetMaterialApp(
-      title: '어셈글',
+      title: 'assemgul',
       theme: lightThemeData,
       darkTheme: darkThemeData,
       initialRoute: kReleaseMode ? Routes.HOME : Routes.TEST,
